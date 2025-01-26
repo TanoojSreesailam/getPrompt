@@ -1,7 +1,6 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { connectToDB } from "@/utils/database";
-
 import User from "@models/user";
 
 const handler = NextAuth({
@@ -16,7 +15,7 @@ const handler = NextAuth({
       },
     }),
   ],
-  debug: true,
+  debug: true, // Enable debugging during development
   callbacks: {
     async signIn({ profile }) {
       try {
@@ -26,21 +25,21 @@ const handler = NextAuth({
         await connectToDB();
         console.log("Connected to DB");
 
-        // Check if user exists
+        // Check if the user exists
         const userExists = await User.findOne({ email: profile?.email });
-        console.log("User exists:", userExists);
-
         if (!userExists) {
           // Create a new user
-          const newUser = await User.create({
+          await User.create({
             email: profile.email,
-            username: profile.name.replace(/\s+/g, "").toLowerCase(), // Optional: Ensure unique usernames
+            username: profile.name.replace(/\s+/g, "").toLowerCase(), // Ensure unique usernames
             image: profile.picture,
           });
-          console.log("New user created:", newUser);
+          console.log("New user created:", profile.email);
+        } else {
+          console.log("User already exists:", profile.email);
         }
 
-        return true; // Sign-in successful
+        return true; // Allow sign-in
       } catch (error) {
         console.error("Error during sign-in:", error);
         return false; // Reject sign-in
